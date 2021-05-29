@@ -1,0 +1,1 @@
+insert into passageiro(id,cpf,nascimento,passageiro,saldo) values(null,'13246579878','2010-01-01','jose',10.23);
