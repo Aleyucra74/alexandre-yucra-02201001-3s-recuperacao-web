@@ -71,5 +71,39 @@ public class PassageiroController {
 
     }
 
+    @PostMapping("/{id}/recarga/{valorRecarga}")
+    public ResponseEntity novaRecarga(@PathVariable Integer id, @PathVariable Double valorRecarga){
+
+        Optional<Passageiro> passageiro = passageiroRepository.findById(id);
+        if (!passageiro.isPresent()) {
+            return ResponseEntity.status(404).build();
+        }else{
+            if (valorRecarga <= 1.00) {
+                return ResponseEntity.status(400).body("Valor da recarga deve ser a partir de R$1.00");
+            }
+            if ((passageiro.get().getSaldo()+valorRecarga) > 230.00) {
+                double valorRestante = (230.00-passageiro.get().getSaldo());
+                return ResponseEntity
+                        .status(400)
+                        .body("Recarga não efetuada! Passaria do limite de R$230,00. Você ainda pode carregar até R$"+valorRestante);
+            }
+            passageiro.map(passageiroTemp -> {
+                passageiroTemp.setPassageiro(passageiro.get().getPassageiro());
+                passageiroTemp.setNascimento(passageiro.get().getNascimento());
+                passageiroTemp.setCpf(passageiro.get().getCpf());
+                passageiroTemp.setSaldo(passageiro.get().getSaldo()+valorRecarga);
+                passageiroRepository.save(passageiroTemp);
+                return "Recarga efetuada";
+            });
+        }
+
+        return ResponseEntity.status(204).build();
+    }
+
+//    @PostMapping("/{id}/passagem/{idTipo}")
+//    public ResponseEntity postPassgem(){}
+
+
+
 
 }
