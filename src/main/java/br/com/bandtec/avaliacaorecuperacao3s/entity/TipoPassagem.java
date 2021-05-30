@@ -20,7 +20,6 @@ public class TipoPassagem {
     @Size(min = 3)
     private String descricao;
 
-    @NotBlank
     @PositiveOrZero
     private  Double valor;
 

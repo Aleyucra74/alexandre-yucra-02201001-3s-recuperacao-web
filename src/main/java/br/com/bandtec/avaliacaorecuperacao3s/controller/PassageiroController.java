@@ -1,9 +1,11 @@
 package br.com.bandtec.avaliacaorecuperacao3s.controller;
 
 import br.com.bandtec.avaliacaorecuperacao3s.entity.Passageiro;
+import br.com.bandtec.avaliacaorecuperacao3s.entity.TipoPassagem;
 import br.com.bandtec.avaliacaorecuperacao3s.modelo.Cpf;
 import br.com.bandtec.avaliacaorecuperacao3s.repository.CpfApi;
 import br.com.bandtec.avaliacaorecuperacao3s.repository.PassageiroRepository;
+import br.com.bandtec.avaliacaorecuperacao3s.repository.TipoPassagemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,9 @@ public class PassageiroController {
 
     @Autowired
     private PassageiroRepository passageiroRepository;
+
+    @Autowired
+    private TipoPassagemRepository tipoPassagemRepository;
 
     @GetMapping
     public ResponseEntity getPassgeiros() throws IOException {
@@ -100,8 +105,34 @@ public class PassageiroController {
         return ResponseEntity.status(204).build();
     }
 
-//    @PostMapping("/{id}/passagem/{idTipo}")
-//    public ResponseEntity postPassgem(){}
+    @PostMapping("/{id}/passagem/{idTipo}")
+    public ResponseEntity postPassgem(@PathVariable Integer id, @PathVariable Integer idTipo){
+
+        Optional<Passageiro> passageiroOptional = passageiroRepository.findById(id);
+        Optional<TipoPassagem> tipoPassagemOptional = tipoPassagemRepository.findById(idTipo);
+
+        if (!passageiroOptional.isPresent()){
+            return ResponseEntity.status(404).body("BU não encontrado");
+        }
+        if (!tipoPassagemOptional.isPresent()){
+            return ResponseEntity.status(404).body("Tipo de passagem não encontrada");
+        }
+
+        if (passageiroOptional.get().getSaldo() < tipoPassagemOptional.get().getValor()){
+            return ResponseEntity
+                    .status(400)
+                    .body("Saldo atual (R$"+passageiroOptional.get().getSaldo()+") insuficiente para esta passagem");
+        }
+        passageiroOptional.map(consumo -> {
+            consumo.setPassageiro(passageiroOptional.get().getPassageiro());
+            consumo.setNascimento(passageiroOptional.get().getNascimento());
+            consumo.setCpf(passageiroOptional.get().getCpf());
+            consumo.setSaldo(passageiroOptional.get().getSaldo()-tipoPassagemOptional.get().getValor());
+            passageiroRepository.save(consumo);
+            return "Passagem gasta";
+        });
+        return ResponseEntity.status(204).body("Passagem gasta");
+    }
 
 
 
